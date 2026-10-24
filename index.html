@@ -1,0 +1,3192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kimi Pet Care - Camera Playground Edition</title>
+  <link rel="icon" type="image/gif" href="kimi.gif" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: monospace, sans-serif;
+    }
+
+    body {
+      background-color: #0d1117;
+      color: #c9d1d9;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      transition: background-color 0.3s ease;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* ESCAPE / PAUSE MENU OVERLAY */
+    .pause-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 70000;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pause-box {
+      width: 100%;
+      max-width: 380px;
+      background: #161b22;
+      border: 2px solid #58a6ff;
+      border-radius: 12px;
+      padding: 30px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 0 30px rgba(88, 166, 255, 0.3);
+      text-align: center;
+    }
+
+    .pause-title {
+      font-size: 1.5rem;
+      color: #58a6ff;
+      font-weight: bold;
+      text-shadow: 0 0 10px rgba(88, 166, 255, 0.6);
+    }
+
+    .pause-btn {
+      width: 100%;
+      padding: 12px;
+      font-size: 0.95rem;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .pause-btn.resume {
+      background: #238636;
+      color: #ffffff;
+      border: 1px solid #2ea043;
+    }
+
+    .pause-btn.resume:hover {
+      background: #2ea043;
+    }
+
+    .pause-btn.exit {
+      background: #da3633;
+      color: #ffffff;
+      border: 1px solid #f85149;
+    }
+
+    .pause-btn.exit:hover {
+      background: #f85149;
+    }
+
+    /* EPILEPSY WARNING INTRO MODAL */
+    .epilepsy-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000000;
+      color: #ff3333;
+      z-index: 30000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .epilepsy-box {
+      max-width: 450px;
+      background: #161b22;
+      border: 2px solid #da3633;
+      border-radius: 12px;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 0 30px rgba(218, 54, 51, 0.4);
+    }
+
+    .epilepsy-box h2 {
+      font-size: 1.2rem;
+      color: #f85149;
+    }
+
+    .epilepsy-box p {
+      font-size: 0.85rem;
+      color: #c9d1d9;
+      line-height: 1.4;
+    }
+
+    .enter-btn {
+      background: #da3633;
+      color: #ffffff;
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .enter-btn:hover {
+      background: #f85149;
+    }
+
+    /* GEOMETRY DASH GLITCH LAYER */
+    .gd-glitch-layer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 999;
+      display: none;
+      overflow: hidden;
+    }
+
+    body.screen-virus .gd-glitch-layer,
+    .gd-game-overlay.glitch-active .gd-glitch-layer {
+      display: block;
+    }
+
+    .gd-grid {
+      position: absolute;
+      width: 200%;
+      height: 200%;
+      top: -50%;
+      left: -50%;
+      background-image: 
+        linear-gradient(to right, rgba(0, 255, 102, 0.15) 2px, transparent 2px),
+        linear-gradient(to bottom, rgba(0, 255, 255, 0.15) 2px, transparent 2px);
+      background-size: 40px 40px;
+      animation: gd-grid-move 0.8s linear infinite;
+    }
+
+    @keyframes gd-grid-move {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      100% { transform: translate(-40px, 40px) rotate(1deg); }
+    }
+
+    .gd-spikes-top, .gd-spikes-bottom {
+      position: absolute;
+      width: 100%;
+      height: 40px;
+      left: 0;
+      background-repeat: repeat-x;
+    }
+
+    .gd-spikes-top {
+      top: 0;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><polygon points="0,0 20,40 40,0" fill="%2300ff66" stroke="%2300ffff" stroke-width="2"/></svg>');
+      animation: spike-pulse 0.2s infinite alternate;
+    }
+
+    .gd-spikes-bottom {
+      bottom: 0;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><polygon points="0,40 20,0 40,40" fill="%23ff0055" stroke="%23ffff00" stroke-width="2"/></svg>');
+      animation: spike-pulse 0.2s infinite alternate-reverse;
+    }
+
+    @keyframes spike-pulse {
+      0% { filter: drop-shadow(0 0 5px #00ff66) contrast(1); }
+      100% { filter: drop-shadow(0 0 15px #ff0055) contrast(2); }
+    }
+
+    /* SCREEN VIRUS & GD GLITCH EFFECTS */
+    body.screen-virus,
+    .gd-game-overlay.glitch-active {
+      animation: screen-shake 0.12s infinite alternate, screen-color-glitch 0.2s infinite alternate;
+    }
+
+    body.screen-crashout,
+    body.baldi-glitch {
+      animation: crashout-shake 0.05s infinite, crashout-strobe 0.1s infinite alternate !important;
+    }
+
+    @keyframes crashout-shake {
+      0% { transform: translate(-10px, 8px) rotate(-1deg); }
+      20% { transform: translate(12px, -10px) rotate(2deg); }
+      40% { transform: translate(-15px, -5px) rotate(-2deg); }
+      60% { transform: translate(10px, 12px) rotate(1deg); }
+      80% { transform: translate(-8px, -12px) rotate(2deg); }
+      100% { transform: translate(0px, 0px) rotate(0deg); }
+    }
+
+    @keyframes crashout-strobe {
+      0% { filter: invert(1) hue-rotate(0deg) contrast(3); }
+      50% { filter: invert(0) hue-rotate(180deg) contrast(5); }
+      100% { filter: invert(1) hue-rotate(360deg) contrast(4); }
+    }
+
+    @keyframes screen-shake {
+      0% { transform: translate(0, 0); }
+      20% { transform: translate(-4px, 3px); }
+      40% { transform: translate(4px, -3px); }
+      60% { transform: translate(-3px, 2px); }
+      80% { transform: translate(3px, -2px); }
+      100% { transform: translate(0, 0); }
+    }
+
+    @keyframes screen-color-glitch {
+      0% { filter: hue-rotate(0deg) contrast(1); }
+      50% { filter: hue-rotate(90deg) contrast(1.4) invert(0.1); }
+      100% { filter: hue-rotate(180deg) contrast(1.2); }
+    }
+
+    .container {
+      width: 100%;
+      max-width: 420px;
+      background: #161b22;
+      border: 2px solid #30363d;
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      z-index: 10;
+    }
+
+    .stage-badge {
+      font-size: 0.8rem;
+      font-weight: bold;
+      color: #a371f7;
+      background: #21262d;
+      padding: 4px 10px;
+      border-radius: 12px;
+      border: 1px solid #30363d;
+      text-align: center;
+    }
+
+    .stage-badge.virus {
+      color: #f85149;
+      border-color: #da3633;
+      background: #270e0f;
+      animation: flash-badge 0.4s infinite alternate;
+    }
+
+    .stage-badge.crashed {
+      color: #00ff66;
+      border-color: #00ff66;
+      background: #002b11;
+      animation: flash-badge 0.1s infinite alternate;
+    }
+
+    .stage-badge.dead {
+      color: #888888;
+      border-color: #444444;
+      background: #111111;
+      animation: none;
+    }
+
+    @keyframes flash-badge {
+      0% { box-shadow: 0 0 5px rgba(218, 54, 51, 0.4); }
+      100% { box-shadow: 0 0 15px rgba(218, 54, 51, 0.9); }
+    }
+
+    .viewport {
+      width: 100%;
+      height: 220px;
+      background: #000000;
+      border: 2px solid #21262d;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pet-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .pet-gif {
+      width: 120px;
+      height: 120px;
+      object-fit: contain;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.3s ease;
+    }
+
+    .pet-wrapper.virus-glitch .pet-gif {
+      animation: glitch-anim 0.15s infinite alternate;
+      filter: drop-shadow(-5px 0px red) drop-shadow(5px 0px cyan) hue-rotate(140deg) contrast(1.3);
+    }
+
+    .pet-wrapper.crashed-out .pet-gif {
+      animation: crash-rotate 0.1s infinite linear !important;
+      filter: invert(1) contrast(3) drop-shadow(0 0 20px #00ff66) !important;
+    }
+
+    .pet-wrapper.dead-kimi .pet-gif {
+      filter: grayscale(1) brightness(0.2) rotate(90deg) !important;
+      animation: none !important;
+      cursor: not-allowed;
+    }
+
+    @keyframes crash-rotate {
+      0% { transform: scale(1.6) rotate(0deg) skew(20deg); }
+      50% { transform: scale(0.6) rotate(180deg) skew(-30deg); }
+      100% { transform: scale(1.6) rotate(360deg) skew(20deg); }
+    }
+
+    @keyframes glitch-anim {
+      0% { transform: translate(0, 0) skew(0deg); }
+      20% { transform: translate(-6px, 4px) skew(-12deg); }
+      40% { transform: translate(6px, -4px) skew(12deg); filter: invert(0.8) drop-shadow(5px -2px lime); }
+      60% { transform: translate(-4px, -3px) skew(-6deg); }
+      80% { transform: translate(5px, 3px) skew(6deg); }
+      100% { transform: translate(0, 0) skew(0deg); }
+    }
+
+    .dialogue {
+      position: absolute;
+      bottom: 10px;
+      background: #21262d;
+      border: 1px solid #30363d;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      color: #58a6ff;
+      text-align: center;
+      max-width: 90%;
+      max-height: 60px;
+      overflow-y: auto;
+    }
+
+    .controls {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    button {
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #c9d1d9;
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    button:hover {
+      background: #30363d;
+      color: #ffffff;
+    }
+
+    .hack-btn {
+      background: #003b00;
+      color: #00ff66;
+      border: 1px solid #00ff66;
+      display: none;
+      animation: pulse-hack 0.8s infinite alternate;
+    }
+
+    .server-room-btn {
+      background: #2b1d00;
+      color: #ffaa00;
+      border: 1px solid #ffaa00;
+      display: block;
+    }
+
+    .crisis-btn {
+      background: #3a1b00;
+      color: #ff7700;
+      border: 1px solid #ff7700;
+      display: none;
+      animation: pulse-crisis 0.8s infinite alternate;
+    }
+
+    @keyframes pulse-crisis {
+      0% { box-shadow: 0 0 4px #ff7700; }
+      100% { box-shadow: 0 0 15px #ff7700; }
+    }
+
+    .save-btn {
+      background: #00223a;
+      color: #58a6ff;
+      border: 1px solid #58a6ff;
+      display: block;
+    }
+
+    @keyframes pulse-hack {
+      0% { box-shadow: 0 0 4px #00ff66; }
+      100% { box-shadow: 0 0 15px #00ff66; }
+    }
+
+    /* GREEN HACKER TERMINAL MODAL */
+    .terminal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000000;
+      color: #00ff66;
+      z-index: 10000;
+      padding: 20px;
+      display: none;
+      flex-direction: column;
+      font-family: 'Courier New', Courier, monospace;
+      box-shadow: inset 0 0 100px rgba(0, 255, 102, 0.2);
+    }
+
+    .terminal-header {
+      border-bottom: 1px solid #00ff66;
+      padding-bottom: 10px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      font-weight: bold;
+    }
+
+    .terminal-body {
+      flex: 1;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      font-size: 0.85rem;
+      line-height: 1.3;
+      padding-bottom: 20px;
+    }
+
+    .terminal-footer {
+      border-top: 1px solid #00ff66;
+      padding-top: 8px;
+      font-size: 0.8rem;
+      color: #88ffaa;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* SERVER ROOM OVERLAY */
+    .server-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #05080c;
+      z-index: 15000;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .server-room-viewport {
+      width: 100%;
+      max-width: 600px;
+      height: 380px;
+      background: #0a0d14;
+      border: 3px solid #ffaa00;
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 30px rgba(255, 170, 0, 0.2);
+    }
+
+    .server-rack {
+      width: 140px;
+      height: 260px;
+      background: #111;
+      border: 3px solid #333;
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 12px;
+      box-shadow: 0 0 20px rgba(0, 170, 255, 0.3);
+      position: relative;
+    }
+
+    .server-unit {
+      height: 35px;
+      background: #222;
+      border: 1px solid #444;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+    }
+
+    .server-led {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #00ff66;
+      box-shadow: 0 0 8px #00ff66;
+      animation: blink-led 0.5s infinite alternate;
+    }
+
+    @keyframes blink-led {
+      0% { opacity: 0.3; }
+      100% { opacity: 1; }
+    }
+
+    .usb-port {
+      width: 18px;
+      height: 8px;
+      background: #000;
+      border: 1px solid #ffaa00;
+      cursor: pointer;
+    }
+
+    .desk {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 70px;
+      background: #181d28;
+      border-top: 2px solid #30363d;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+    }
+
+    .flash-drive {
+      width: 50px;
+      height: 20px;
+      background: #da3633;
+      border: 2px solid #ffffff;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 0 15px rgba(218, 54, 51, 0.8);
+      animation: pulse-usb 0.6s infinite alternate;
+    }
+
+    @keyframes pulse-usb {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.1); box-shadow: 0 0 25px rgba(255, 0, 0, 1); }
+    }
+
+    .kai-text-box {
+      margin-top: 15px;
+      background: #161b22;
+      border: 2px solid #58a6ff;
+      border-radius: 8px;
+      padding: 12px;
+      color: #58a6ff;
+      font-size: 0.9rem;
+      text-align: center;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    /* UBUNTU PURPLE KERNEL PANIC IMAGE & BOSS 2 OVERLAY */
+    .linux-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #300a24;
+      color: #ffffff;
+      z-index: 25000;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .panic-img-screen {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .panic-png {
+      max-width: 95vw;
+      max-height: 95vh;
+      object-fit: contain;
+      border: 2px solid #e95420;
+      box-shadow: 0 0 30px rgba(233, 84, 32, 0.5);
+    }
+
+    .boss-2-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #1e0517;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      border: 8px solid #e95420;
+    }
+
+    .boss-2-title {
+      font-size: 2.2rem;
+      color: #e95420;
+      font-weight: bold;
+      animation: flash-boss 0.2s infinite alternate;
+      text-align: center;
+      text-shadow: 0 0 15px rgba(233, 84, 32, 0.8);
+    }
+
+    @keyframes flash-boss {
+      0% { text-shadow: 0 0 10px #e95420; transform: scale(1); }
+      100% { text-shadow: 0 0 30px #ffff00; transform: scale(1.05); }
+    }
+
+    /* CRISIS DASHBOARD MODAL */
+    .crisis-dash-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(5, 8, 12, 0.95);
+      z-index: 32000;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+    }
+
+    .crisis-dash-box {
+      width: 100%;
+      max-width: 600px;
+      background: #161b22;
+      border: 2px solid #ff7700;
+      border-radius: 12px;
+      padding: 25px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      box-shadow: 0 0 40px rgba(255, 119, 0, 0.3);
+    }
+
+    .crisis-dash-title {
+      font-size: 1.3rem;
+      color: #ff7700;
+      font-weight: bold;
+      text-align: center;
+      text-shadow: 0 0 10px rgba(255, 119, 0, 0.6);
+    }
+
+    .crisis-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .crisis-item {
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .crisis-info h4 {
+      color: #f85149;
+      font-size: 0.95rem;
+    }
+
+    .crisis-info p {
+      color: #8b949e;
+      font-size: 0.75rem;
+    }
+
+    .crisis-action-btn {
+      background: #da3633;
+      color: #fff;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.8rem;
+    }
+
+    .crisis-action-btn:hover {
+      background: #f85149;
+    }
+
+    /* CRISIS 4: BALDI MATH QUIZ OVERLAY */
+    .baldi-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #00aa55;
+      z-index: 45000;
+      display: none;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      gap: 40px;
+    }
+
+    .baldi-left {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .baldi-img {
+      width: 250px;
+      height: 350px;
+      object-fit: contain;
+      transition: transform 0.2s;
+    }
+
+    .baldi-img.fisheye {
+      transform: scale(1.4) perspective(200px) rotateX(25deg) rotateY(-20deg) skew(15deg);
+      filter: contrast(3) hue-rotate(120deg) drop-shadow(0 0 30px red);
+    }
+
+    .baldi-right {
+      background: #113322;
+      border: 4px solid #00ff66;
+      border-radius: 12px;
+      padding: 30px;
+      width: 450px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: 0 0 50px rgba(0, 255, 102, 0.4);
+    }
+
+    .baldi-title {
+      color: #00ff66;
+      font-size: 1.4rem;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .math-question {
+      font-size: 1.1rem;
+      color: #ffffff;
+      background: #002211;
+      padding: 15px;
+      border-radius: 6px;
+      border: 1px solid #00ff66;
+      text-align: center;
+    }
+
+    .math-input {
+      background: #000;
+      border: 2px solid #00ff66;
+      color: #00ff66;
+      padding: 12px;
+      font-size: 1rem;
+      border-radius: 6px;
+      text-align: center;
+    }
+
+    /* MIMI BOSS FIGHT STYLES */
+    .mimi-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #1a0505;
+      z-index: 48000;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+      gap: 20px;
+    }
+
+    .mimi-box {
+      background: #2a0808;
+      border: 3px solid #ff3333;
+      border-radius: 12px;
+      padding: 30px;
+      max-width: 500px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      box-shadow: 0 0 40px rgba(255, 0, 0, 0.6);
+      text-align: center;
+    }
+
+    .mimi-title {
+      font-size: 1.5rem;
+      color: #ff3333;
+      font-weight: bold;
+    }
+
+    .mimi-prompt {
+      font-size: 0.95rem;
+      color: #ffaaaa;
+      line-height: 1.4;
+    }
+
+    .mimi-counter {
+      font-size: 1.2rem;
+      color: #ffff00;
+      font-weight: bold;
+    }
+
+    .mimi-timer {
+      font-size: 1.1rem;
+      color: #ff3333;
+      font-weight: bold;
+      animation: flash-timer 0.5s infinite alternate;
+    }
+
+    @keyframes flash-timer {
+      0% { opacity: 0.5; }
+      100% { opacity: 1; text-shadow: 0 0 10px red; }
+    }
+
+    /* CRISIS 3: MAC OS ERROR LAND (XP WALLPAPER & RANDOM ERRORS) */
+    .macos-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: url('https://upload.wikimedia.org/wikipedia/en/2/27/Bliss_%28Windows_XP%29.png') no-repeat center center fixed;
+      background-size: cover;
+      z-index: 35000;
+      display: none;
+      overflow: hidden;
+    }
+
+    .macos-dock {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 20px;
+      padding: 10px 20px;
+      display: flex;
+      gap: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      z-index: 36000;
+    }
+
+    .dock-icon {
+      font-size: 2rem;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .dock-icon:hover {
+      transform: scale(1.3) translateY(-5px);
+    }
+
+    .floating-email {
+      position: absolute;
+      font-size: 2rem;
+      z-index: 36500;
+      animation: float-emoji 2s ease-out forwards;
+    }
+
+    @keyframes float-emoji {
+      0% { transform: translateY(0) scale(0.5); opacity: 1; }
+      100% { transform: translateY(-300px) scale(1.5) rotate(360deg); opacity: 0; }
+    }
+
+    .finder-window {
+      position: absolute;
+      top: 150px;
+      left: 200px;
+      width: 420px;
+      height: 280px;
+      background: #2c2c2e;
+      border: 2px solid #555;
+      border-radius: 8px;
+      z-index: 37500;
+      display: none;
+      flex-direction: column;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    .finder-header {
+      background: #3a3a3c;
+      padding: 8px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: bold;
+      border-top-left-radius: 6px;
+      border-top-right-radius: 6px;
+    }
+
+    .finder-body {
+      flex: 1;
+      background: #1c1c1e;
+      padding: 20px;
+      display: flex;
+      gap: 20px;
+      overflow-y: auto;
+    }
+
+    .file-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      width: 100px;
+      text-align: center;
+      padding: 10px;
+      border-radius: 6px;
+    }
+
+    .file-item:hover {
+      background: rgba(255,255,255,0.1);
+    }
+
+    .file-icon {
+      font-size: 2.5rem;
+    }
+
+    .file-name {
+      color: #fff;
+      font-size: 0.75rem;
+      margin-top: 5px;
+      word-break: break-all;
+    }
+
+    .error-window {
+      position: absolute;
+      width: 320px;
+      background: #ece9d8;
+      border: 3px solid #0055ea;
+      border-radius: 6px 6px 0 0;
+      box-shadow: 4px 4px 15px rgba(0,0,0,0.5);
+      z-index: 37000;
+      font-family: Tahoma, sans-serif;
+      user-select: none;
+    }
+
+    .error-header {
+      background: linear-gradient(to right, #0055ea, #6382e6);
+      color: white;
+      padding: 6px 10px;
+      font-weight: bold;
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .error-close-btn {
+      background: #e81123;
+      color: white;
+      border: 1px solid #fff;
+      width: 18px;
+      height: 18px;
+      font-size: 0.7rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+
+    .error-body {
+      padding: 20px 15px;
+      color: #000;
+      font-size: 0.85rem;
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      background: #ece9d8;
+    }
+
+    .error-icon-box {
+      font-size: 2rem;
+    }
+
+    .error-footer {
+      background: #f0f0e0;
+      padding: 10px;
+      text-align: center;
+      border-top: 1px solid #d4d0c8;
+    }
+
+    .xp-ok-btn {
+      background: #e1e1e1;
+      border: 1px solid #707070;
+      padding: 4px 15px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+
+    .xp-ok-btn:hover {
+      background: #e5f1fb;
+      border: 1px solid #0078d7;
+    }
+
+    /* PURE CSS PIXEL ART TUX LOGO */
+    .pixel-tux {
+      width: 16px;
+      height: 16px;
+      font-size: 16px;
+      line-height: 16px;
+      background: transparent;
+      box-shadow: 
+        -20px -50px 0 #000, -16px -50px 0 #000, -12px -50px 0 #000, -8px -50px 0 #000, -4px -50px 0 #000, 0px -50px 0 #000, 4px -50px 0 #000, 8px -50px 0 #000, 12px -50px 0 #000, 16px -50px 0 #000, 20px -50px 0 #000,
+        -24px -46px 0 #000, 24px -46px 0 #000,
+        -28px -42px 0 #000, 28px -42px 0 #000,
+        -28px -38px 0 #000, -24px -38px 0 #fff, -20px -38px 0 #fff, -16px -38px 0 #fff, -12px -38px 0 #fff, -8px -38px 0 #fff, -4px -38px 0 #fff, 0px -38px 0 #fff, 4px -38px 0 #fff, 8px -38px 0 #fff, 12px -38px 0 #fff, 16px -38px 0 #fff, 20px -38px 0 #fff, 24px -38px 0 #fff, 28px -38px 0 #000,
+        -4px -30px 0 #f39c12, 0px -30px 0 #f39c12, 4px -30px 0 #f39c12,
+        -16px -34px 0 #ff0000, 16px -34px 0 #ff0000,
+        -36px -18px 0 #000, -32px -18px 0 #000, 32px -18px 0 #000, 36px -18px 0 #000,
+        -20px -6px 0 #e67e22, -16px -6px 0 #e67e22, 16px -6px 0 #e67e22, 20px -6px 0 #e67e22;
+      margin: 60px auto;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .pixel-tux:hover {
+      transform: scale(1.3);
+    }
+
+    /* GEOMETRY DASH MINIGAME CANVAS OVERLAY */
+    .gd-game-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 60000;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    canvas {
+      background: #001122;
+      border: 3px solid #00ffff;
+      box-shadow: 0 0 25px #00ffff;
+      max-width: 95vw;
+      max-height: 80vh;
+      position: relative;
+      z-index: 1000;
+    }
+
+    .gd-controls-hint {
+      color: #00ffff;
+      font-size: 0.9rem;
+      margin-top: 15px;
+      text-align: center;
+      position: relative;
+      z-index: 1000;
+      font-weight: bold;
+    }
+
+    /* TABLE & BLOODY KNIFE ROOM */
+    .knife-room-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #0a0505;
+      z-index: 40000;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .table-container {
+      width: 100%;
+      max-width: 500px;
+      height: 350px;
+      background: #1c100c;
+      border: 4px solid #3d2218;
+      border-radius: 10px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
+    }
+
+    .table-kimi {
+      width: 100px;
+      height: 100px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 10px rgba(255,0,0,0.5));
+    }
+
+    .bloody-knife {
+      position: absolute;
+      bottom: 30px;
+      left: 40px;
+      width: 80px;
+      height: 30px;
+      background: #333;
+      border: 2px solid #555;
+      border-radius: 4px;
+      color: #ff3333;
+      font-size: 0.7rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      user-select: none;
+      box-shadow: 0 0 15px rgba(255, 0, 0, 0.6);
+      z-index: 10;
+    }
+
+    .bloody-knife:active {
+      cursor: grabbing;
+    }
+
+    /* NORMAL KIMI JUMPSCARE OVERLAY */
+    .jumpscare-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+      z-index: 50000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      animation: fnaf-scare 0.05s infinite alternate;
+    }
+
+    .jumpscare-img {
+      width: 90vw;
+      height: 90vh;
+      object-fit: contain;
+      filter: contrast(3) invert(0.2) drop-shadow(0 0 50px red);
+    }
+
+    @keyframes fnaf-scare {
+      0% { transform: scale(1) translate(-20px, 10px); filter: hue-rotate(0deg); }
+      50% { transform: scale(1.4) translate(20px, -15px); filter: hue-rotate(180deg) invert(1); }
+      100% { transform: scale(1.1) translate(-10px, -20px); filter: hue-rotate(360deg); }
+    }
+
+    /* BALDI VIDEO BOSS JUMPSCARE OVERLAY */
+    .video-jumpscare-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+      z-index: 60000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .jumpscare-video {
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+    }
+
+    /* CRISIS 5: FUNNY TROLLED VIDEO OVERLAY */
+    .troll-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+      z-index: 65000;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .troll-video {
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+    }
+
+    .troll-badge {
+      position: absolute;
+      top: 20px;
+      background: rgba(0, 0, 0, 0.8);
+      border: 2px solid #ffff00;
+      color: #ffff00;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      z-index: 65100;
+      text-shadow: 0 0 10px yellow;
+      animation: troll-bounce 0.5s infinite alternate;
+    }
+
+    @keyframes troll-bounce {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.08); }
+    }
+
+    /* CRISIS 7: CAMERA PLAYGROUND OVERLAY */
+    .playground-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #1a1f2c;
+      z-index: 75000;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .playground-box {
+      width: 100%;
+      max-width: 750px;
+      background: #161b22;
+      border: 3px solid #58a6ff;
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      box-shadow: 0 0 40px rgba(88, 166, 255, 0.4);
+    }
+
+    .playground-header {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      align-items: center;
+    }
+
+    .playground-title {
+      font-size: 1.2rem;
+      color: #58a6ff;
+      font-weight: bold;
+    }
+
+    .mode-toggle-btn {
+      background: #238636;
+      color: #fff;
+      border: 1px solid #2ea043;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: bold;
+    }
+
+    .mode-toggle-btn:hover {
+      background: #2ea043;
+    }
+
+    .cam-game-container {
+      position: relative;
+      width: 640px;
+      max-width: 90vw;
+      height: 400px;
+      max-height: 60vh;
+      background: #000;
+      border: 3px solid #30363d;
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: crosshair;
+    }
+
+    .playground-cam {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1); /* Mirror view */
+    }
+
+    /* NOSE APPLE FEEDER OVERLAY LAYER (HARDER) */
+    .feeder-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-rows: repeat(3, 1fr);
+      grid-template-columns: repeat(3, 1fr);
+      padding: 25px;
+      gap: 20px;
+      pointer-events: none;
+    }
+
+    .person-cell {
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(2px);
+      border: 2px dashed rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      transition: transform 0.1s;
+    }
+
+    .person-cell.fed {
+      background: rgba(46, 160, 67, 0.6);
+      border-color: #2ea043;
+      transform: scale(1.1);
+    }
+
+    .nose-apple {
+      position: absolute;
+      font-size: 3rem;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      filter: drop-shadow(0 0 12px rgba(255, 0, 0, 0.9));
+      z-index: 10;
+    }
+
+    /* SCREAMING CHICKEN LAND PLATFORMER LAYER */
+    .chicken-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      overflow: hidden;
+      background: linear-gradient(to bottom, transparent 60%, rgba(35, 134, 54, 0.4) 60%);
+    }
+
+    .screaming-chicken {
+      position: absolute;
+      left: 80px;
+      bottom: 25px;
+      font-size: 2.8rem;
+      z-index: 20;
+      filter: drop-shadow(0 0 10px yellow);
+    }
+
+    .ground-line {
+      position: absolute;
+      bottom: 20px;
+      width: 100%;
+      height: 5px;
+      background: #2ea043;
+    }
+
+    .land-obstacle {
+      position: absolute;
+      bottom: 20px;
+      width: 35px;
+      height: 50px;
+      background: #da3633;
+      border: 2px solid #f85149;
+      border-top-left-radius: 6px;
+      border-top-right-radius: 6px;
+    }
+
+    .mic-meter-box {
+      width: 100%;
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      height: 22px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .mic-meter-fill {
+      height: 100%;
+      background: linear-gradient(to right, #238636, #e3b341, #f85149);
+      width: 0%;
+      transition: width 0.05s linear;
+    }
+
+    .mic-meter-text {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: bold;
+      color: #fff;
+      text-shadow: 0 0 3px #000;
+    }
+
+    /* AI Voice & Mic Section */
+    .ai-box {
+      width: 100%;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .api-row, .chat-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    input[type="password"], input[type="text"] {
+      flex: 1;
+      background: #161b22;
+      border: 1px solid #30363d;
+      color: #c9d1d9;
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+    }
+
+    .mic-btn.active {
+      background: #da3633;
+      color: #ffffff;
+      animation: pulse 1s infinite alternate;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.05); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ESCAPE PAUSE MENU OVERLAY -->
+  <div class="pause-overlay" id="pauseOverlay">
+    <div class="pause-box">
+      <div class="pause-title">⏸️ GAME PAUSED</div>
+      <p style="font-size: 0.85rem; color: #8b949e;">Select an option to resume or return home.</p>
+      <button class="pause-btn resume" onclick="resumeGame()">▶ RESUME GAME</button>
+      <button class="pause-btn exit" onclick="exitToMainMenu()">🏠 EXIT TO MAIN MENU</button>
+    </div>
+  </div>
+
+  <!-- GEOMETRY DASH GLITCH LAYER -->
+  <div class="gd-glitch-layer">
+    <div class="gd-grid"></div>
+    <div class="gd-spikes-top"></div>
+    <div class="gd-spikes-bottom"></div>
+    <div class="gd-orb" style="top: 20%; left: 15%;"></div>
+    <div class="gd-orb orb-pink" style="bottom: 25%; right: 15%;"></div>
+  </div>
+
+  <!-- EPILEPSY WARNING MODAL -->
+  <div class="epilepsy-overlay" id="epilepsyModal">
+    <div class="epilepsy-box">
+      <h2>⚠️ PHOTOSENSITIVE EPILEPSY WARNING</h2>
+      <p>This application contains flashing lights, rapid color strobes, intense visual glitches, kernel panics, and Geometry Dash minigames. Viewer discretion advised.</p>
+      <button class="enter-btn" onclick="dismissWarning()">I UNDERSTAND & ENTER ⚠️</button>
+    </div>
+  </div>
+
+  <!-- Local Audio Elements -->
+  <audio id="audioTalk" src="talk.mp3"></audio>
+  <audio id="boss1Audio" src="boss1.mp3" loop></audio>
+  <audio id="boss2Audio" src="boss2.mp3" loop></audio>
+  <audio id="boss3Audio" src="boss3.mp3" loop></audio>
+  <audio id="boss4Audio" src="boss4.mp3" loop></audio>
+  <audio id="boss5Audio" src="boss5.mp3" loop></audio>
+
+  <div class="container">
+    <div class="stage-badge" id="stageBadge">KIMI SYSTEM ONLINE</div>
+
+    <div class="viewport">
+      <div class="pet-wrapper" id="petWrapper">
+        <img src="kimi.gif" class="pet-gif" id="kimiImg" onclick="triggerVirusThreat()" alt="Kimi" />
+      </div>
+      <div class="dialogue" id="speechBox">Touch Kimi...</div>
+    </div>
+
+    <div class="controls">
+      <button onclick="triggerVirusThreat()">TOUCH KIMI 😈</button>
+      <button class="hack-btn" id="hackBtn" onclick="openTerminal()">💻 HACK KIMI CODE</button>
+      <button class="server-room-btn" onclick="openServerRoom()">🖥️ GO TO KIMI SERVER ROOM</button>
+      <button class="crisis-btn" id="crisisBtn" onclick="openCrisisDash()">🚨 CRISIS DASHBOARD UNLOCKED 🚨</button>
+      <button class="save-btn" onclick="saveGameData()">💾 SAVE GAME DATA</button>
+    </div>
+
+    <!-- AI Key & Mic Controls -->
+    <div class="ai-box">
+      <div class="api-row">
+        <input type="password" id="apiKeyInput" placeholder="Paste OpenRouter/Gemini API Key..." />
+        <button onclick="saveApiKey()">SAVE KEY</button>
+      </div>
+      <div class="chat-row">
+        <input type="text" id="userInput" placeholder="Talk to Kimi..." onkeypress="handleKeyPress(event)" />
+        <button class="mic-btn" id="micBtn" onclick="toggleMic()">🎤</button>
+        <button onclick="sendAiMessage()">SEND</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GREEN HACKER TERMINAL OVERLAY -->
+  <div class="terminal-overlay" id="terminalOverlay">
+    <div class="terminal-header">
+      <span>ROOT@KIMI_CORE_V1.04:~# INJECT_EXPLOIT</span>
+      <span id="lineCounter">LINES: 0 / 800</span>
+    </div>
+    <div class="terminal-body" id="terminalOutput">
+[INIT] Establishing connection to Kimi's memory stack...
+[READY] Type anything on your keyboard to stream exploit code...
+[HINT] Reach 800 lines of code, then press ALT+X (or OPTION+X) to grant access!
+================================================================================
+    </div>
+    <div class="terminal-footer">
+      <span>STATUS: TYPING INJECTOR ACTIVE</span>
+      <span>PRESS [ALT + X] WHEN LINES ≥ 800</span>
+    </div>
+  </div>
+
+  <!-- SERVER ROOM OVERLAY -->
+  <div class="server-overlay" id="serverOverlay">
+    <div class="server-room-viewport">
+      <div class="server-rack">
+        <div class="server-unit"><div class="server-led"></div><span>SERVER_01</span></div>
+        <div class="server-unit"><div class="server-led"></div><div class="usb-port" onclick="plugUSB()" title="Plug USB Here!"></div></div>
+        <div class="server-unit"><div class="server-led"></div><span>MAIN_CORE</span></div>
+      </div>
+      <div class="desk">
+        <div class="flash-drive" id="flashDrive" onclick="plugUSB()">EMERGENCY USB</div>
+      </div>
+    </div>
+    <div class="kai-text-box" id="kaiBox">
+      [SERVER ROOM ONLINE] Click the Red Emergency USB Drive to insert it into the server rack!
+    </div>
+    <button style="margin-top: 10px;" onclick="closeServerRoom()">EXIT SERVER ROOM</button>
+  </div>
+
+  <!-- UBUNTU KERNEL PANIC IMAGE & BOSS 2 OVERLAY -->
+  <div class="linux-overlay" id="linuxOverlay">
+    <div class="panic-img-screen" id="kernelPanicImgBox">
+      <img src="kernel_panic.png" class="panic-png" alt="Ubuntu Kernel Panic" />
+    </div>
+    <div class="boss-2-screen" id="boss2Screen">
+      <div class="boss-2-title">⚠️ UBUNTU KERNEL PANIC - BOSS 2 ⚠️</div>
+      <div class="pixel-tux" id="pixelTux" onclick="triggerBoss2CrashOut()" title="Click to Glitch & Start Stereo Madness!"></div>
+      <div style="color: #f7f7f7; font-size: 1.0rem; text-align: center;" id="boss2Msg">UBUNTU KERNEL FROZEN. CLICK PIXEL TUX TO START STEREO MADNESS!</div>
+      <button style="background: #e95420; color: #fff; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer;" onclick="closeLinuxPanic()">RETURN TO SYSTEM</button>
+    </div>
+  </div>
+
+  <!-- CRISIS 4: BALDI MATH QUIZ OVERLAY -->
+  <div class="baldi-overlay" id="baldiOverlay">
+    <div class="baldi-left">
+      <img src="baldi.png" class="baldi-img" id="baldiImg" alt="Baldi" />
+    </div>
+    <div class="baldi-right">
+      <div class="baldi-title">🧮 BALDI'S IMPOSSIBLE MATH QUIZ 🧮</div>
+      <div class="math-question" id="mathQuestionText">Loading Question 1...</div>
+      <input type="text" class="math-input" id="mathAnswerInput" placeholder="Type your answer here..." onkeypress="handleMathKey(event)" />
+      <button style="background: #00ff66; color: #000; font-weight: bold; padding: 12px;" onclick="submitMathAnswer()">SUBMIT ANSWER</button>
+    </div>
+  </div>
+
+  <!-- MIMI EVIL TWIN BOSS FIGHT OVERLAY -->
+  <div class="mimi-overlay" id="mimiOverlay">
+    <div class="mimi-box">
+      <div class="mimi-title">👿 MIMI (KIMI'S EVIL TWIN) ENCOUNTER 👿</div>
+      <img src="kimi.gif" style="width: 100px; height: 100px; filter: hue-rotate(290deg) invert(1);" alt="Mimi" />
+      <div class="mimi-prompt">Wrong answer! Mimi has intercepted your test. Type:</div>
+      <div style="color: #00ff66; font-size: 1.1rem; font-weight: bold;">"FORGIVE FOR ME"</div>
+      <div class="mimi-timer" id="mimiTimer">⏱️ Time Left: 20s</div>
+      <div class="mimi-counter" id="mimiCounter">Remaining: 4 / 4</div>
+      <input type="text" id="mimiInput" class="math-input" placeholder="Type FORGIVE FOR ME..." oninput="checkMimiInput(event)" />
+    </div>
+  </div>
+
+  <!-- CRISIS DASHBOARD MODAL -->
+  <div class="crisis-dash-overlay" id="crisisDashOverlay">
+    <div class="crisis-dash-box">
+      <div class="crisis-dash-title">🚨 ACTIVE SYSTEM CRISIS DASHBOARD 🚨</div>
+      <div class="crisis-list">
+        <div class="crisis-item">
+          <div class="crisis-info">
+            <h4>LINUX KERNEL PANIC</h4>
+            <p>Ubuntu Core frozen. Requires Stereo Madness recovery.</p>
+          </div>
+          <button class="crisis-action-btn" onclick="openLinuxPanic()">LAUNCH</button>
+        </div>
+        <div class="crisis-item">
+          <div class="crisis-info">
+            <h4>KIMI VIRUS CORRUPTION</h4>
+            <p>Malicious neural routines active in background stack.</p>
+          </div>
+          <button class="crisis-action-btn" onclick="openTerminal()">ENGAGE</button>
+        </div>
+        <div class="crisis-item">
+          <div class="crisis-info">
+            <h4>CRISIS 3: MAC OS ERROR LAND</h4>
+            <p>macOS Darwin kernel overridden with infinite error popups.</p>
+          </div>
+          <button class="crisis-action-btn" onclick="openMacOsErrorLand()">ENTER</button>
+        </div>
+        <div class="crisis-item">
+          <div class="crisis-info">
+            <h4>CRISIS 4: BALDI MATH QUIZ</h4>
+            <p>Solve Baldi's math test and conquer Mimi to restore system integrity.</p>
+          </div>
+          <button class="crisis-action-btn" onclick="openBaldiQuiz()">ENTER</button>
+        </div>
+        <div class="crisis-item" style="border-color: #ffff00; background: #222200;">
+          <div class="crisis-info">
+            <h4 style="color: #ffff00;">CRISIS 5: FUNNY CRISIS (GET TROLLED)</h4>
+            <p>Absolutely nothing bad happens. Totally serious system protocol.</p>
+          </div>
+          <button class="crisis-action-btn" style="background: #e3b341; color: #000;" onclick="openFunnyCrisis()">TROLLED</button>
+        </div>
+        <div class="crisis-item">
+          <div class="crisis-info">
+            <h4>SOOO FUNNY</h4>
+            <p>Routine humor synthesis module check. Verify laughter frequency.</p>
+          </div>
+          <button class="crisis-action-btn" onclick="openSoooFunnyCrisis()">RUN</button>
+        </div>
+        <!-- CRISIS 7: CAMERA PLAYGROUND -->
+        <div class="crisis-item" style="border-color: #58a6ff; background: #0c1b2b;">
+          <div class="crisis-info">
+            <h4 style="color: #58a6ff;">CRISIS 7: CAMERA PLAYGROUND</h4>
+            <p>Feed hungry people with your nose apple in 20s or play Screaming Chicken!</p>
+          </div>
+          <button class="crisis-action-btn" style="background: #1f6feb;" onclick="openPlaygroundCrisis()">PLAY</button>
+        </div>
+      </div>
+      <button style="background: #30363d; color: #fff; border: none; padding: 10px; border-radius: 6px; cursor: pointer;" onclick="closeCrisisDash()">CLOSE DASHBOARD</button>
+    </div>
+  </div>
+
+  <!-- CRISIS 3: MAC OS ERROR LAND OVERLAY -->
+  <div class="macos-overlay" id="macosOverlay">
+    <div class="macos-dock">
+      <span class="dock-icon" id="finderIcon" title="Finder" onclick="openSadFinder()">📁</span>
+      <span class="dock-icon" id="emailIcon" title="Email" onclick="spawnEmails()">📧</span>
+      <span class="dock-icon" title="Terminal">💻</span>
+      <span class="dock-icon" title="Kimi Virus">😈</span>
+      <span class="dock-icon" id="trashIcon" title="Trash" onclick="vacuumCleanEmails()">🗑️</span>
+    </div>
+
+    <!-- SAD FINDER WINDOW -->
+    <div class="finder-window" id="sadFinderWindow">
+      <div class="finder-header">
+        <span>📁 Sad Finder - System Drive</span>
+        <button class="error-close-btn" onclick="document.getElementById('sadFinderWindow').style.display='none'">×</button>
+      </div>
+      <div class="finder-body">
+        <div class="file-item" onclick="runAntivirusExe()">
+          <div class="file-icon">💩</div>
+          <div class="file-name">antivirus-avast-360-totalsecurity.exe</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GEOMETRY DASH MINIGAME CANVAS OVERLAY -->
+  <div class="gd-game-overlay" id="gdOverlay">
+    <h2 style="color: #00ffff; margin-bottom: 10px; position: relative; z-index: 1000; text-shadow: 0 0 10px #00ffff;">🎵 STEREO MADNESS - LEVEL 1 🎵</h2>
+    <canvas id="gdCanvas" width="600" height="300"></canvas>
+    <div class="gd-controls-hint">PRESS SPACE / UP ARROW / CLICK TO JUMP! PRESS [ESC] TO PAUSE!</div>
+  </div>
+
+  <!-- TABLE & BLOODY KNIFE ROOM -->
+  <div class="knife-room-overlay" id="knifeRoomOverlay">
+    <h2 style="color: #ff3333; margin-bottom: 15px; text-shadow: 0 0 10px red;">CHOOSE YOUR WEAPON...</h2>
+    <div class="table-container" id="tableContainer">
+      <img src="kimi.gif" class="table-kimi" id="tableKimi" alt="Kimi" />
+      <div class="bloody-knife" id="bloodyKnife" draggable="true">🔪 BLOODY KNIFE</div>
+    </div>
+    <p style="color: #888; font-size: 0.8rem; margin-top: 15px;">Drag or drag & drop the bloody knife onto Kimi to kill him!</p>
+  </div>
+
+  <!-- NORMAL KIMI JUMPSCARE OVERLAY -->
+  <div class="jumpscare-overlay" id="jumpscareOverlay">
+    <img src="kimi.gif" class="jumpscare-img" alt="Scare" />
+  </div>
+
+  <!-- BALDI VIDEO BOSS JUMPSCARE OVERLAY (NO AUTOPLAY) -->
+  <div class="video-jumpscare-overlay" id="videoJumpscareOverlay">
+    <video class="jumpscare-video" id="jumpscareVideo" src="jumpscareboss4.mp4"></video>
+  </div>
+
+  <!-- CRISIS 5: FUNNY TROLLED VIDEO OVERLAY -->
+  <div class="troll-overlay" id="trollOverlay">
+    <div class="troll-badge"> trolololololololol 😆</div>
+    <video class="troll-video" id="trollVideo" src="hahatrolled.mp4"></video>
+  </div>
+
+  <!-- CRISIS 6: SOOO FUNNY OVERLAY -->
+  <div class="troll-overlay" id="soooFunnyOverlay" style="z-index: 66000;">
+    <div class="troll-badge" style="color: #58a6ff; border-color: #58a6ff; text-shadow: 0 0 10px #58a6ff;">ROUTINE HUMOR DIAGNOSTIC ACTIVE 🤓</div>
+    <video class="troll-video" id="soooFunnyVideo" src="hahatrolled.mp4"></video>
+  </div>
+
+  <!-- CRISIS 7: CAMERA PLAYGROUND OVERLAY -->
+  <div class="playground-overlay" id="playgroundOverlay">
+    <div class="playground-box">
+      <div class="playground-header">
+        <div class="playground-title" id="playgroundTitle">🍎 MODE 1: NOSE APPLE FEEDER (20s LIMIT)</div>
+        <button class="mode-toggle-btn" onclick="togglePlaygroundMode()">SWITCH TO: SCREAMING CHICKEN 🐔</button>
+      </div>
+
+      <div class="cam-game-container" id="camContainer">
+        <video class="playground-cam" id="playgroundVideo" autoplay playsinline muted></video>
+
+        <!-- MODE 1: 3x3 GRID OF HUNGRY PEOPLE -->
+        <div class="feeder-layer" id="feederLayer">
+          <div class="person-cell" id="cell-0">😋 👦</div>
+          <div class="person-cell" id="cell-1">😋 👧</div>
+          <div class="person-cell" id="cell-2">😋 👴</div>
+          <div class="person-cell" id="cell-3">😋 👶</div>
+          <div class="person-cell" id="cell-4">😋 👩</div>
+          <div class="person-cell" id="cell-5">😋 🧑</div>
+          <div class="person-cell" id="cell-6">😋 👨</div>
+          <div class="person-cell" id="cell-7">😋 👵</div>
+          <div class="person-cell" id="cell-8">😋 👦</div>
+        </div>
+        <div class="nose-apple" id="noseApple">🍎</div>
+
+        <!-- MODE 2: SCREAMING CHICKEN LAND PLATFORMER -->
+        <div class="chicken-layer" id="chickenLayer">
+          <div class="ground-line"></div>
+          <div class="screaming-chicken" id="screamingChicken">🐔</div>
+          <div class="land-obstacle" id="landObstacle" style="right: -40px;"></div>
+        </div>
+      </div>
+
+      <!-- MIC LOUDNESS METER FOR SCREAMING CHICKEN -->
+      <div class="mic-meter-box" id="micMeterBox" style="display: none;">
+        <div class="mic-meter-fill" id="micMeterFill"></div>
+        <div class="mic-meter-text" id="micMeterText">🗣️ SCREAM LOUDNESS: 0%</div>
+      </div>
+
+      <div style="display: flex; gap: 10px; width: 100%; justify-content: space-between; align-items: center;">
+        <span style="font-size: 0.85rem; color: #8b949e;" id="playgroundScore">Time Left: 20s | Fed: 0 / 9</span>
+        <button style="background: #da3633; color: #fff; border: none; padding: 10px 20px; font-weight: bold; border-radius: 6px; cursor: pointer;" onclick="closePlaygroundCrisis()">EXIT PLAYGROUND</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let isVirusActive = false;
+    let isCrashedOut = false;
+    let isKimiKilled = false;
+    let terminalOpen = false;
+    let isGamePaused = false;
+    let lineCount = 0;
+    let codeIndex = 0;
+    let apiKey = localStorage.getItem('kimi_api_key') || '';
+    let playgroundStream = null;
+    let currentPlaygroundMode = 1; // 1: Feeder, 2: Screaming Chicken
+
+    // Feeder state (Harder with timer)
+    let fedCount = 0;
+    let fedCells = [false, false, false, false, false, false, false, false, false];
+    let feederTimeLeft = 20;
+    let feederTimerInterval = null;
+    let feederActive = false;
+
+    // Audio & Mic state for Screaming Chicken Land Platformer
+    let audioContext = null;
+    let analyser = null;
+    let chickenY = 20;
+    let chickenVelocity = 0;
+    let obstacleX = 700;
+    let chickenGameInterval = null;
+    let chickenScore = 0;
+
+    if (apiKey) {
+      document.getElementById('apiKeyInput').value = apiKey;
+    }
+
+    /* GLOBAL ESCAPE / PAUSE MENU SYSTEM */
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' || e.code === 'Escape') {
+        e.preventDefault();
+        togglePauseMenu();
+      }
+    });
+
+    function togglePauseMenu() {
+      const pauseOverlay = document.getElementById('pauseOverlay');
+      if (isGamePaused) {
+        resumeGame();
+      } else {
+        isGamePaused = true;
+        pauseOverlay.style.display = 'flex';
+      }
+    }
+
+    function resumeGame() {
+      isGamePaused = false;
+      document.getElementById('pauseOverlay').style.display = 'none';
+    }
+
+    function exitToMainMenu() {
+      isGamePaused = false;
+      document.getElementById('pauseOverlay').style.display = 'none';
+
+      // Close all overlays and stop minigames / media streams
+      document.getElementById('terminalOverlay').style.display = 'none';
+      document.getElementById('serverOverlay').style.display = 'none';
+      document.getElementById('linuxOverlay').style.display = 'none';
+      document.getElementById('crisisDashOverlay').style.display = 'none';
+      document.getElementById('macosOverlay').style.display = 'none';
+      document.getElementById('gdOverlay').style.display = 'none';
+      document.getElementById('knifeRoomOverlay').style.display = 'none';
+      document.getElementById('sadFinderWindow').style.display = 'none';
+      document.getElementById('baldiOverlay').style.display = 'none';
+      document.getElementById('mimiOverlay').style.display = 'none';
+      document.getElementById('jumpscareOverlay').style.display = 'none';
+      document.getElementById('videoJumpscareOverlay').style.display = 'none';
+      
+      stopPlaygroundStream();
+
+      terminalOpen = false;
+      clearInterval(errorSpawnInterval);
+      clearInterval(mimiTimerInterval);
+      clearInterval(feederTimerInterval);
+      clearInterval(chickenGameInterval);
+      document.querySelectorAll('.error-window').forEach(w => w.remove());
+
+      // Stop all boss audio tracks
+      stopBossMusic();
+      stopBoss2Music();
+      stopBoss3Music();
+      stopBoss4Music();
+      stopBoss5Music();
+
+      // Show Kimi if alive
+      if (!isKimiKilled) {
+        document.getElementById('kimiImg').style.display = 'block';
+      }
+
+      document.getElementById('speechBox').innerText = "Returned to Main Menu.";
+    }
+
+    function dismissWarning() {
+      document.getElementById('epilepsyModal').style.display = 'none';
+    }
+
+    function saveGameData() {
+      const gameState = {
+        isKimiKilled: isKimiKilled,
+        isCrashedOut: isCrashedOut,
+        apiKey: apiKey
+      };
+      localStorage.setItem('kimi_game_save', JSON.stringify(gameState));
+      alert("💾 Game data successfully saved to local storage!");
+    }
+
+    function playBossMusic() {
+      if (isKimiKilled) return;
+      const bossMusic = document.getElementById('boss1Audio');
+      if (bossMusic.paused) {
+        bossMusic.volume = 0.6;
+        bossMusic.play().catch(e => console.log("boss1.mp3 missing"));
+      }
+    }
+
+    function stopBossMusic() {
+      const bossMusic = document.getElementById('boss1Audio');
+      bossMusic.pause();
+      bossMusic.currentTime = 0;
+    }
+
+    function playBoss2Music() {
+      const boss2Music = document.getElementById('boss2Audio');
+      boss2Music.volume = 0.7;
+      boss2Music.play().catch(e => console.log("boss2.mp3 missing"));
+    }
+
+    function stopBoss2Music() {
+      const boss2Music = document.getElementById('boss2Audio');
+      boss2Music.pause();
+      boss2Music.currentTime = 0;
+    }
+
+    function playBoss3Music() {
+      const boss3Music = document.getElementById('boss3Audio');
+      boss3Music.volume = 0.7;
+      boss3Music.play().catch(e => console.log("boss3.mp3 missing"));
+    }
+
+    function stopBoss3Music() {
+      const boss3Music = document.getElementById('boss3Audio');
+      boss3Music.pause();
+      boss3Music.currentTime = 0;
+    }
+
+    function playBoss4Music() {
+      const boss4Music = document.getElementById('boss4Audio');
+      boss4Music.volume = 0.9;
+      boss4Music.play().catch(e => console.log("boss4.mp3 missing"));
+    }
+
+    function stopBoss4Music() {
+      const boss4Music = document.getElementById('boss4Audio');
+      boss4Music.pause();
+      boss4Music.currentTime = 0;
+    }
+
+    function playBoss5Music() {
+      const boss5Music = document.getElementById('boss5Audio');
+      boss5Music.volume = 0.95;
+      boss5Music.play().catch(e => console.log("boss5.mp3 missing"));
+    }
+
+    function stopBoss5Music() {
+      const boss5Music = document.getElementById('boss5Audio');
+      boss5Music.pause();
+      boss5Music.currentTime = 0;
+    }
+
+    const hackerCodeSnippet = `
+void exploit_kimi_kernel(uint64_t base_addr) {
+    uint32_t *pet_brain = (uint32_t*)(base_addr + 0xDEADBEEF);
+    disable_security_sandbox();
+    override_emotion_matrix(KIMI_OVERRIDE_FULL);
+    for (int i = 0; i < 256; i++) {
+        pet_brain[i] ^= 0xFFFFFFFF;
+        printk(KERN_EMERG "OVERWRITING KIMI THOUGHT_BUFFER[%d]... OK\\n", i);
+    }
+    sys_bypass_memory_guard();
+    trigger_glitch_loop(INFINITY_LOCK);
+}
+
+int inject_payload_buffer(char *buffer, size_t len) {
+    if (!buffer) return -EINVAL;
+    void *kernel_exec = kmalloc(len, GFP_KERNEL);
+    memcpy(kernel_exec, buffer, len);
+    asm volatile("jmp *%0" : : "r"(kernel_exec));
+    return 0;
+}
+`;
+
+    let recognition;
+    let isListening = false;
+
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        document.getElementById('userInput').value = transcript;
+        toggleMic();
+        sendAiMessage();
+      };
+
+      recognition.onerror = () => { toggleMic(); };
+      recognition.onend = () => { toggleMic(); };
+    }
+
+    function toggleMic() {
+      const micBtn = document.getElementById('micBtn');
+      if (!recognition) {
+        alert("Speech Recognition is not supported on this browser.");
+        return;
+      }
+      if (isListening) {
+        recognition.stop();
+        isListening = false;
+        micBtn.classList.remove('active');
+      } else {
+        recognition.start();
+        isListening = true;
+        micBtn.classList.add('active');
+        document.getElementById('speechBox').innerText = "Listening to your mic...";
+      }
+    }
+
+    function saveApiKey() {
+      apiKey = document.getElementById('apiKeyInput').value.trim();
+      localStorage.setItem('kimi_api_key', apiKey);
+      document.getElementById('speechBox').innerText = "API Key saved!";
+    }
+
+    function speakAmerican(text, pitchVal, rateVal) {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.pitch = pitchVal;
+      utterance.rate = rateVal;
+
+      const voices = window.speechSynthesis.getVoices();
+      const usVoice = voices.find(v => v.lang === 'en-US' || v.lang === 'en_US');
+      if (usVoice) {
+        utterance.voice = usVoice;
+      }
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
+    }
+
+    async function sendAiMessage() {
+      if (isKimiKilled) {
+        document.getElementById('speechBox').innerText = "Kimi is dead. He cannot answer...";
+        return;
+      }
+      const text = document.getElementById('userInput').value.trim();
+      if (!text) return;
+
+      document.getElementById('speechBox').innerText = "Thinking...";
+      document.getElementById('userInput').value = "";
+
+      if (!apiKey) {
+        document.getElementById('speechBox').innerText = "Please paste an API key below first!";
+        return;
+      }
+
+      try {
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash",
+            messages: [
+              {
+                role: "system",
+                content: "You are Kimi, a chaotic computer virus pet. Keep responses short, crazy, and malicious."
+              },
+              { role: "user", content: text }
+            ]
+          })
+        });
+
+        const data = await response.json();
+        if (data.choices && data.choices[0]) {
+          const aiReply = data.choices[0].message.content;
+          document.getElementById('speechBox').innerText = aiReply;
+          
+          let pitchVal = isCrashedOut ? 0.1 : (isVirusActive ? 0.5 : 1.3);
+          speakAmerican(aiReply, pitchVal, 1.0);
+        } else {
+          document.getElementById('speechBox').innerText = "Error reading API response.";
+        }
+      } catch (err) {
+        document.getElementById('speechBox').innerText = "API Request failed! Check your key/connection.";
+      }
+    }
+
+    function handleKeyPress(e) {
+      if (e.key === 'Enter') sendAiMessage();
+    }
+
+    function triggerVirusThreat() {
+      if (isCrashedOut || isKimiKilled) return;
+      isVirusActive = true;
+      document.body.classList.add('screen-virus');
+      
+      const wrapper = document.getElementById('petWrapper');
+      wrapper.classList.add('virus-glitch');
+      
+      const badge = document.getElementById('stageBadge');
+      badge.innerText = '⚠️ VIRUS ACTIVE (SYSTEM INFECTED) ⚠️';
+      badge.classList.add('virus');
+
+      document.getElementById('hackBtn').style.display = 'block';
+
+      playBossMusic();
+
+      const audioTalk = document.getElementById('audioTalk');
+      audioTalk.currentTime = 0;
+      audioTalk.play().catch(e => console.log("talk.mp3 missing"));
+
+      const virusThreat = "i am gonna become a virus FOR YOUR COMPUTER 😈";
+      document.getElementById('speechBox').innerText = virusThreat;
+      speakAmerican(virusThreat, 0.5, 1.0);
+    }
+
+    /* CRISIS DASHBOARD LOGIC */
+    function openCrisisDash() {
+      document.getElementById('crisisDashOverlay').style.display = 'flex';
+    }
+
+    function closeCrisisDash() {
+      document.getElementById('crisisDashOverlay').style.display = 'none';
+    }
+
+    /* CRISIS 5: FUNNY TROLLED LOGIC */
+    function openFunnyCrisis() {
+      closeCrisisDash();
+      const trollOverlay = document.getElementById('trollOverlay');
+      const trollVideo = document.getElementById('trollVideo');
+
+      trollOverlay.style.display = 'flex';
+      trollVideo.currentTime = 0;
+      trollVideo.play().catch(e => console.log("hahatrolled.mp4 missing"));
+      
+      speakAmerican("Get trolled!", 1.5, 1.3);
+
+      trollVideo.onended = () => {
+        trollOverlay.style.display = 'none';
+        openCrisisDash();
+      };
+    }
+
+    /* CRISIS 6: SOOO FUNNY LOGIC */
+    function openSoooFunnyCrisis() {
+      closeCrisisDash();
+      const funnyOverlay = document.getElementById('soooFunnyOverlay');
+      const funnyVideo = document.getElementById('soooFunnyVideo');
+
+      funnyOverlay.style.display = 'flex';
+      funnyVideo.currentTime = 0;
+      funnyVideo.play().catch(e => console.log("hahatrolled.mp4 missing"));
+      
+      speakAmerican("Sooo funny!", 1.2, 1.1);
+
+      funnyVideo.onended = () => {
+        funnyOverlay.style.display = 'none';
+        openCrisisDash();
+      };
+    }
+
+    /* CRISIS 7: CAMERA PLAYGROUND LOGIC */
+    async function openPlaygroundCrisis() {
+      closeCrisisDash();
+      const overlay = document.getElementById('playgroundOverlay');
+      const videoEl = document.getElementById('playgroundVideo');
+
+      overlay.style.display = 'flex';
+      currentPlaygroundMode = 1;
+      updatePlaygroundModeUI();
+
+      try {
+        playgroundStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { width: { ideal: 1280 }, height: { ideal: 720 } }, 
+          audio: true 
+        });
+        videoEl.srcObject = playgroundStream;
+
+        // Setup Audio Analyser for Screaming Chicken
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioContext.createAnalyser();
+        const source = audioContext.createMediaStreamSource(playgroundStream);
+        source.connect(analyser);
+        analyser.fftSize = 256;
+
+        setupFeederMouseTracking();
+      } catch (err) {
+        alert("Camera and microphone permission required for Playground: " + err.message);
+        overlay.style.display = 'none';
+        openCrisisDash();
+      }
+    }
+
+    function togglePlaygroundMode() {
+      currentPlaygroundMode = currentPlaygroundMode === 1 ? 2 : 1;
+      updatePlaygroundModeUI();
+    }
+
+    function updatePlaygroundModeUI() {
+      const titleEl = document.getElementById('playgroundTitle');
+      const feederLayer = document.getElementById('feederLayer');
+      const noseApple = document.getElementById('noseApple');
+      const chickenLayer = document.getElementById('chickenLayer');
+      const micMeterBox = document.getElementById('micMeterBox');
+      const toggleBtn = document.querySelector('.mode-toggle-btn');
+
+      clearInterval(chickenGameInterval);
+      clearInterval(feederTimerInterval);
+
+      if (currentPlaygroundMode === 1) {
+        titleEl.innerText = "🍎 MODE 1: NOSE APPLE FEEDER (20s LIMIT)";
+        feederLayer.style.display = 'grid';
+        noseApple.style.display = 'block';
+        chickenLayer.style.display = 'none';
+        micMeterBox.style.display = 'none';
+        toggleBtn.innerText = "SWITCH TO: SCREAMING CHICKEN 🐔";
+        resetFeederGame();
+      } else {
+        titleEl.innerText = "🐔 MODE 2: SCREAMING CHICKEN LAND PLATFORMER";
+        feederLayer.style.display = 'none';
+        noseApple.style.display = 'none';
+        chickenLayer.style.display = 'block';
+        micMeterBox.style.display = 'block';
+        toggleBtn.innerText = "SWITCH TO: NOSE APPLE FEEDER 🍎";
+        document.getElementById('playgroundScore').innerText = "Scream into your mic to jump over obstacles!";
+        startScreamingChickenGame();
+      }
+    }
+
+    /* MODE 1: NOSE APPLE FEEDER LOGIC (HARDER & TIMED) */
+    function resetFeederGame() {
+      fedCount = 0;
+      fedCells = [false, false, false, false, false, false, false, false, false];
+      feederTimeLeft = 20;
+      feederActive = true;
+
+      const emojis = ['😋 👦', '😋 👧', '😋 👴', '😋 👶', '😋 👩', '😋 🧑', '😋 👨', '😋 👵', '😋 👦'];
+      for (let i = 0; i < 9; i++) {
+        const cell = document.getElementById(`cell-${i}`);
+        cell.classList.remove('fed');
+        cell.innerHTML = emojis[i];
+      }
+      document.getElementById('playgroundScore').innerText = `Time Left: ${feederTimeLeft}s | Fed: 0 / 9`;
+
+      clearInterval(feederTimerInterval);
+      feederTimerInterval = setInterval(() => {
+        if (!isGamePaused && feederActive && currentPlaygroundMode === 1) {
+          feederTimeLeft--;
+          document.getElementById('playgroundScore').innerText = `Time Left: ${feederTimeLeft}s | Fed: ${fedCount} / 9`;
+
+          if (feederTimeLeft <= 0) {
+            feederActive = false;
+            clearInterval(feederTimerInterval);
+            alert("⏰ TIME'S UP! You couldn't feed everyone in 20 seconds. Try again!");
+            resetFeederGame();
+          }
+        }
+      }, 1000);
+    }
+
+    function setupFeederMouseTracking() {
+      const container = document.getElementById('camContainer');
+      const noseApple = document.getElementById('noseApple');
+
+      container.onmousemove = (e) => {
+        if (currentPlaygroundMode !== 1 || isGamePaused || !feederActive) return;
+        const rect = container.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        noseApple.style.left = `${x}px`;
+        noseApple.style.top = `${y}px`;
+
+        // Check collision with the 3x3 grid cells (Apple controlled by nose/mouse)
+        for (let i = 0; i < 9; i++) {
+          const cell = document.getElementById(`cell-${i}`);
+          const cellRect = cell.getBoundingClientRect();
+          const relLeft = cellRect.left - rect.left;
+          const relTop = cellRect.top - rect.top;
+          const relRight = relLeft + cellRect.width;
+          const relBottom = relTop + cellRect.height;
+
+          if (x >= relLeft && x <= relRight && y >= relTop && y <= relBottom) {
+            if (!fedCells[i]) {
+              fedCells[i] = true;
+              cell.classList.add('fed');
+              cell.innerHTML = '😋❤️';
+              fedCount++;
+              
+              let timeTaken = 20 - feederTimeLeft;
+              document.getElementById('playgroundScore').innerText = `Time Left: ${feederTimeLeft}s | Fed: ${fedCount} / 9`;
+
+              if (fedCount >= 9) {
+                feederActive = false;
+                clearInterval(feederTimerInterval);
+                setTimeout(() => {
+                  alert(`🏆 AMAZING! You fed all 9 people in just ${timeTaken} seconds using your nose apple!`);
+                  resetFeederGame();
+                }, 200);
+              }
+            }
+          }
+        }
+      };
+    }
+
+    /* MODE 2: SCREAMING CHICKEN LAND PLATFORMER LOGIC */
+    function startScreamingChickenGame() {
+      chickenY = 20;
+      chickenVelocity = 0;
+      obstacleX = 700;
+      chickenScore = 0;
+      const chickenEl = document.getElementById('screamingChicken');
+      const obstacleEl = document.getElementById('landObstacle');
+      const fillEl = document.getElementById('micMeterFill');
+      const textEl = document.getElementById('micMeterText');
+      const dataArray = new Uint8Array(analyser ? analyser.frequencyBinCount : 128);
+
+      chickenGameInterval = setInterval(() => {
+        if (isGamePaused || currentPlaygroundMode !== 2) return;
+
+        // Read microphone volume
+        let volume = 0;
+        if (analyser) {
+          analyser.getByteFrequencyData(dataArray);
+          let sum = 0;
+          for (let i = 0; i < dataArray.length; i++) {
+            sum += dataArray[i];
+          }
+          volume = sum / dataArray.length;
+        }
+
+        let volumePercent = Math.min(100, Math.floor((volume / 60) * 100));
+        fillEl.style.width = `${volumePercent}%`;
+        textEl.innerText = `🗣️ SCREAM LOUDNESS: ${volumePercent}%`;
+
+        // If user screams into mic, chicken jumps from the ground!
+        if (volume > 20 && chickenY <= 20) {
+          chickenVelocity = (volume / 4.5); // Louder scream = higher jump
+        }
+
+        // Apply gravity
+        chickenVelocity -= 0.9;
+        chickenY += chickenVelocity;
+
+        if (chickenY < 20) {
+          chickenY = 20;
+          chickenVelocity = 0;
+        }
+
+        chickenEl.style.bottom = `${chickenY}px`;
+
+        // Move land obstacle towards the chicken
+        obstacleX -= 6;
+        if (obstacleX < -50) {
+          obstacleX = 700;
+          chickenScore++;
+          document.getElementById('playgroundScore').innerText = `Chicken Score: ${chickenScore} Obstacles Cleared!`;
+        }
+        obstacleEl.style.right = `${680 - obstacleX}px`;
+
+        // Check land collision with obstacle
+        if (obstacleX > 40 && obstacleX < 90 && chickenY < 65) {
+          alert(`💥 CRASH! Score: ${score = chickenScore}. Scream louder into your mic to clear obstacles!`);
+          chickenY = 20;
+          obstacleX = 700;
+          chickenScore = 0;
+        }
+      }, 30);
+    }
+
+    function stopPlaygroundStream() {
+      if (playgroundStream) {
+        playgroundStream.getTracks().forEach(track => track.stop());
+        playgroundStream = null;
+      }
+      if (audioContext) {
+        audioContext.close();
+        audioContext = null;
+      }
+      const videoEl = document.getElementById('playgroundVideo');
+      videoEl.srcObject = null;
+      document.getElementById('playgroundOverlay').style.display = 'none';
+      clearInterval(chickenGameInterval);
+      clearInterval(feederTimerInterval);
+    }
+
+    function closePlaygroundCrisis() {
+      stopPlaygroundStream();
+      openCrisisDash();
+    }
+
+    /* CRISIS 4: BALDI MATH QUIZ LOGIC */
+    let baldiStep = 1;
+
+    const baldiQuestions = {
+      1: { q: "Question 1 (Easy): What is 2 + 2?", a: "4" },
+      2: { q: "Question 2 (Medium): What is 6 x 6?", a: "36" },
+      3: { q: "Question 3 (Hard): Solve for c: sin(a)^2 + cos(b)^2 = c where a=30°, b=60°", a: "1" }
+    };
+
+    function openBaldiQuiz() {
+      closeCrisisDash();
+      baldiStep = 1;
+      document.getElementById('baldiOverlay').style.display = 'flex';
+      document.getElementById('mathQuestionText').innerText = baldiQuestions[1].q;
+      document.getElementById('mathAnswerInput').value = '';
+      playBoss4Music();
+      speakAmerican("Welcome to Baldi's Math Quiz!", 0.9, 1.0);
+    }
+
+    function handleMathKey(e) {
+      if (e.key === 'Enter') submitMathAnswer();
+    }
+
+    function submitMathAnswer() {
+      const userAns = document.getElementById('mathAnswerInput').value.trim();
+      const currentQ = baldiQuestions[baldiStep];
+
+      if (userAns === currentQ.a) {
+        baldiStep++;
+        document.getElementById('mathAnswerInput').value = '';
+        if (baldiStep <= 3) {
+          document.getElementById('mathQuestionText').innerText = baldiQuestions[baldiStep].q;
+          speakAmerican("Correct!", 1.2, 1.1);
+        } else {
+          document.getElementById('baldiOverlay').style.display = 'none';
+          stopBoss4Music();
+          openMimiFight();
+        }
+      } else {
+        triggerBaldiWrongPunishment();
+      }
+    }
+
+    function triggerBaldiWrongPunishment() {
+      document.body.classList.remove('baldi-glitch');
+      const baldiImg = document.getElementById('baldiImg');
+      baldiImg.classList.remove('fisheye');
+      document.getElementById('baldiOverlay').style.display = 'none';
+      document.getElementById('mathAnswerInput').value = '';
+
+      const videoOverlay = document.getElementById('videoJumpscareOverlay');
+      const videoEl = document.getElementById('jumpscareVideo');
+      videoOverlay.style.display = 'flex';
+      videoEl.currentTime = 0;
+      videoEl.play().catch(e => console.log("jumpscareboss4.mp4 missing"));
+      speakAmerican("WRONG! INCORRECT!", 0.2, 1.5);
+
+      setTimeout(() => {
+        if (isGamePaused) return;
+        videoOverlay.style.display = 'none';
+        videoEl.pause();
+
+        document.body.classList.add('baldi-glitch');
+        openMimiFight();
+      }, 3500);
+    }
+
+    /* MIMI BOSS FIGHT LOGIC (WITH 20s TIMER) */
+    let forgiveCount = 0;
+    let mimiSecondsLeft = 20;
+    let mimiTimerInterval;
+
+    function openMimiFight() {
+      forgiveCount = 0;
+      mimiSecondsLeft = 20;
+      document.getElementById('mimiCounter').innerText = "Remaining: 4 / 4";
+      document.getElementById('mimiTimer').innerText = `⏱️ Time Left: ${mimiSecondsLeft}s`;
+      document.getElementById('mimiInput').value = '';
+      document.getElementById('mimiOverlay').style.display = 'flex';
+      speakAmerican("Type FORGIVE FOR ME in 20 seconds!", 0.5, 0.9);
+
+      clearInterval(mimiTimerInterval);
+      mimiTimerInterval = setInterval(() => {
+        if (!isGamePaused) {
+          mimiSecondsLeft--;
+          document.getElementById('mimiTimer').innerText = `⏱️ Time Left: ${mimiSecondsLeft}s`;
+          if (mimiSecondsLeft <= 0) {
+            clearInterval(mimiTimerInterval);
+            triggerMimiTimeOutJumpscare();
+          }
+        }
+      }, 1000);
+    }
+
+    function checkMimiInput(e) {
+      const val = e.target.value.trim();
+      if (val === "FORGIVE FOR ME") {
+        forgiveCount++;
+        e.target.value = '';
+        const remaining = 4 - forgiveCount;
+        if (remaining > 0) {
+          document.getElementById('mimiCounter').innerText = `Remaining: ${remaining} / 4`;
+          speakAmerican("Keep typing!", 1.0, 1.2);
+        } else {
+          clearInterval(mimiTimerInterval);
+          document.body.classList.remove('baldi-glitch');
+          document.getElementById('mimiOverlay').style.display = 'none';
+          stopBoss4Music();
+          alert("🏆 MIMI DEFEATED! Returning to Crisis Dashboard!");
+          openCrisisDash();
+        }
+      }
+    }
+
+    function triggerMimiTimeOutJumpscare() {
+      document.getElementById('mimiOverlay').style.display = 'none';
+      stopBoss4Music();
+
+      const videoOverlay = document.getElementById('videoJumpscareOverlay');
+      const videoEl = document.getElementById('jumpscareVideo');
+      videoOverlay.style.display = 'flex';
+      videoEl.currentTime = 0;
+      videoEl.play().catch(e => console.log("jumpscareboss4.mp4 missing"));
+
+      speakAmerican("Too slow! Mimi claims you!", 0.2, 1.5);
+
+      setTimeout(() => {
+        if (isGamePaused) return;
+        videoOverlay.style.display = 'none';
+        videoEl.pause();
+        document.body.classList.remove('baldi-glitch');
+        openCrisisDash();
+      }, 3500);
+    }
+
+    /* UBUNTU KERNEL PANIC IMAGE & BOSS 2 LOGIC */
+    function openLinuxPanic() {
+      closeCrisisDash();
+      const overlay = document.getElementById('linuxOverlay');
+      const panicImgBox = document.getElementById('kernelPanicImgBox');
+      const boss2 = document.getElementById('boss2Screen');
+      
+      document.getElementById('kimiImg').style.display = 'none';
+
+      overlay.style.display = 'flex';
+      boss2.style.display = 'none';
+      panicImgBox.style.display = 'flex';
+
+      setTimeout(() => {
+        if (isGamePaused) return;
+        panicImgBox.style.display = 'none';
+        boss2.style.display = 'flex';
+
+        playBoss2Music();
+        speakAmerican("UBUNTU KERNEL PANIC ENGAGED.", 0.3, 1.1);
+      }, 3000);
+    }
+
+    function triggerBoss2CrashOut() {
+      const tux = document.getElementById('pixelTux');
+      tux.style.boxShadow = `
+        -20px -50px 0 #ff0055, -16px -50px 0 #ff0055, -12px -50px 0 #ff0055, -8px -50px 0 #ff0055, -4px -50px 0 #ff0055, 0px -50px 0 #ff0055, 4px -50px 0 #ff0055, 8px -50px 0 #ff0055, 12px -50px 0 #ff0055, 16px -50px 0 #ff0055, 20px -50px 0 #ff0055,
+        -28px -38px 0 #ff0055, -24px -38px 0 #00ffff, -20px -38px 0 #00ffff, -16px -38px 0 #00ffff, -12px -38px 0 #00ffff, -8px -38px 0 #00ffff, -4px -38px 0 #00ffff, 0px -38px 0 #00ffff, 4px -38px 0 #00ffff, 8px -38px 0 #00ffff, 12px -38px 0 #00ffff, 16px -38px 0 #00ffff, 20px -38px 0 #00ffff, 24px -38px 0 #00ffff, 28px -38px 0 #ff0055,
+        -16px -34px 0 #ffff00, 16px -34px 0 #ffff00,
+        -4px -30px 0 #00ff66, 0px -30px 0 #00ff66, 4px -30px 0 #00ff66
+      `;
+
+      document.getElementById('boss2Msg').innerText = "💥 CRASH OUT! LAUNCHING STEREO MADNESS LEVEL 1... 💥";
+      speakAmerican("WELCOME TO STEREO MADNESS!", 1.4, 1.2);
+
+      setTimeout(() => {
+        if (isGamePaused) return;
+        closeLinuxPanic();
+        startGDMinigame();
+      }, 1500);
+    }
+
+    function closeLinuxPanic() {
+      document.getElementById('linuxOverlay').style.display = 'none';
+      stopBoss2Music();
+      if (!isKimiKilled) {
+        document.getElementById('kimiImg').style.display = 'block';
+      }
+    }
+
+    /* AUTHENTIC GEOMETRY DASH MINIGAME ENGINE */
+    let gdLoop;
+    let player = { x: 60, y: 220, size: 28, vy: 0, isJumping: false, rotation: 0 };
+    let obstacles = [];
+    let progress = 0;
+    let cameraScroll = 0;
+
+    const levelData = [
+      { type: 'spike', x: 400 },
+      { type: 'spike', x: 750 },
+      { type: 'block', x: 1050, w: 30, h: 30 },
+      { type: 'spike', x: 1050, yOffset: 30 },
+      { type: 'spike', x: 1400 },
+      { type: 'double_spike', x: 1750 },
+      { type: 'block', x: 2100, w: 60, h: 30 },
+      { type: 'spike', x: 2450 },
+      { type: 'double_spike', x: 2800 },
+      { type: 'spike', x: 3150 },
+      { type: 'block', x: 3500, w: 90, h: 30 }
+    ];
+
+    function startGDMinigame() {
+      const gdOverlay = document.getElementById('gdOverlay');
+      const canvas = document.getElementById('gdCanvas');
+      const ctx = canvas.getContext('2d');
+
+      gdOverlay.classList.add('glitch-active');
+      gdOverlay.style.display = 'flex';
+      
+      progress = 0;
+      cameraScroll = 0;
+      player.y = 220;
+      player.vy = 0;
+      player.rotation = 0;
+
+      obstacles = JSON.parse(JSON.stringify(levelData));
+
+      function doJump() {
+        if (!player.isJumping && !isGamePaused) {
+          player.vy = -11;
+          player.isJumping = true;
+        }
+      }
+
+      window.onkeydown = (e) => {
+        if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') doJump();
+      };
+
+      canvas.onclick = doJump;
+
+      function update() {
+        if (!isGamePaused) {
+          player.vy += 0.65;
+          player.y += player.vy;
+
+          if (player.y >= 220) {
+            player.y = 220;
+            player.vy = 0;
+            player.isJumping = false;
+            player.rotation = Math.round(player.rotation / 90) * 90;
+          } else {
+            player.rotation += 8;
+          }
+
+          cameraScroll += 4.5;
+          progress = Math.min(100, Math.floor((cameraScroll / 3600) * 100));
+
+          ctx.fillStyle = '#001122';
+          ctx.fillRect(0, 0, 600, 300);
+
+          ctx.fillStyle = '#00ffff';
+          ctx.fillRect(0, 0, 600, 10);
+          ctx.fillRect(0, 248, 600, 4);
+
+          ctx.fillStyle = '#002244';
+          ctx.fillRect(0, 250, 600, 50);
+
+          ctx.strokeStyle = 'rgba(0, 255, 255, 0.2)';
+          ctx.lineWidth = 1;
+          for (let gx = -(cameraScroll % 30); gx < 600; gx += 30) {
+            ctx.beginPath();
+            ctx.moveTo(gx, 250);
+            ctx.lineTo(gx, 300);
+            ctx.stroke();
+          }
+
+          ctx.save();
+          ctx.translate(player.x + player.size / 2, player.y + player.size / 2);
+          ctx.rotate((player.rotation * Math.PI) / 180);
+          ctx.fillStyle = '#00ffff';
+          ctx.fillRect(-player.size / 2, -player.size / 2, player.size, player.size);
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(-player.size / 2, -player.size / 2, player.size, player.size);
+          ctx.fillStyle = '#001122';
+          ctx.fillRect(-6, -6, 12, 12);
+          ctx.restore();
+
+          for (let i = 0; i < obstacles.length; i++) {
+            let obs = obstacles[i];
+            let screenX = obs.x - cameraScroll;
+
+            if (screenX > -100 && screenX < 700) {
+              if (obs.type === 'spike') {
+                let baseY = 250 - (obs.yOffset || 0);
+                ctx.fillStyle = '#ff0055';
+                ctx.strokeStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.moveTo(screenX, baseY);
+                ctx.lineTo(screenX + 12, baseY - 30);
+                ctx.lineTo(screenX + 24, baseY);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                if (
+                  player.x < screenX + 20 &&
+                  player.x + player.size > screenX + 4 &&
+                  player.y + player.size > baseY - 26
+                ) {
+                  cancelAnimationFrame(gdLoop);
+                  alert(`💥 CRASHED AT ${progress}%! Restarting Stereo Madness...`);
+                  startGDMinigame();
+                  return;
+                }
+              } else if (obs.type === 'double_spike') {
+                let baseY = 250;
+                ctx.fillStyle = '#ff0055';
+                ctx.strokeStyle = '#ffffff';
+                for (let s = 0; s < 2; s++) {
+                  let sx = screenX + s * 22;
+                  ctx.beginPath();
+                  ctx.moveTo(sx, baseY);
+                  ctx.lineTo(sx + 11, baseY - 30);
+                  ctx.lineTo(sx + 22, baseY);
+                  ctx.closePath();
+                  ctx.fill();
+                  ctx.stroke();
+                }
+
+                if (
+                  player.x < screenX + 42 &&
+                  player.x + player.size > screenX + 4 &&
+                  player.y + player.size > baseY - 26
+                ) {
+                  cancelAnimationFrame(gdLoop);
+                  alert(`💥 CRASHED AT ${progress}%! Restarting Stereo Madness...`);
+                  startGDMinigame();
+                  return;
+                }
+              } else if (obs.type === 'block') {
+                let blockY = 250 - obs.h;
+                ctx.fillStyle = '#0088cc';
+                ctx.fillRect(screenX, blockY, obs.w, obs.h);
+                ctx.strokeStyle = '#00ffff';
+                ctx.strokeRect(screenX, blockY, obs.w, obs.h);
+
+                if (
+                  player.x + player.size > screenX &&
+                  player.x < screenX + obs.w &&
+                  player.y + player.size >= blockY &&
+                  player.y + player.size <= blockY + 10 &&
+                  player.vy >= 0
+                ) {
+                  player.y = blockY - player.size;
+                  player.vy = 0;
+                  player.isJumping = false;
+                }
+              }
+            }
+          }
+
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 18px monospace';
+          ctx.fillText(`PROGRESS: ${progress}%`, 20, 35);
+
+          if (progress >= 100) {
+            cancelAnimationFrame(gdLoop);
+            gdOverlay.classList.remove('glitch-active');
+            gdOverlay.style.display = 'none';
+            alert("🏆 STEREO MADNESS COMPLETED! 100% CLEAR!");
+            grantAccessAndCrashout();
+            return;
+          }
+        }
+
+        gdLoop = requestAnimationFrame(update);
+      }
+
+      update();
+    }
+
+    /* SERVER ROOM & NORMAL KIMI JUMPSCARE LOGIC */
+    function openServerRoom() {
+      document.getElementById('serverOverlay').style.display = 'flex';
+      if (!isKimiKilled) playBossMusic();
+    }
+
+    function closeServerRoom() {
+      document.getElementById('serverOverlay').style.display = 'none';
+    }
+
+    function plugUSB() {
+      document.getElementById('flashDrive').style.display = 'none';
+      const kaiBox = document.getElementById('kaiBox');
+      
+      kaiBox.style.color = '#ff3333';
+      kaiBox.innerText = '📱 KAI: "Dude... look behind you..." 😨';
+
+      speakAmerican("Dude... look behind you...", 1.6, 0.75);
+
+      setTimeout(() => {
+        if (isGamePaused) return;
+        triggerKimiNormalJumpscare();
+      }, 1200);
+    }
+
+    function triggerKimiNormalJumpscare() {
+      const scareOverlay = document.getElementById('jumpscareOverlay');
+      scareOverlay.style.display = 'flex';
+      playJumpscareAudio();
+
+      setTimeout(() => {
+        if (isGamePaused) return;
+        scareOverlay.style.display = 'none';
+        closeServerRoom();
+        openKnifeRoom();
+      }, 2500);
+    }
+
+    function playJumpscareAudio() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
+        osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 2.0);
+
+        gain.gain.setValueAtTime(1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 2.2);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start();
+        osc.stop(audioCtx.currentTime + 2.2);
+      } catch (e) {
+        console.log("Audio Context blocked");
+      }
+    }
+
+    /* BLOODY KNIFE & TABLE ROOM LOGIC */
+    function openKnifeRoom() {
+      document.getElementById('knifeRoomOverlay').style.display = 'flex';
+    }
+
+    const knife = document.getElementById('bloodyKnife');
+    const kimiTable = document.getElementById('tableKimi');
+
+    knife.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', 'knife');
+    });
+
+    kimiTable.addEventListener('dragover', (e) => {
+      e.preventDefault();
+    });
+
+    kimiTable.addEventListener('drop', (e) => {
+      e.preventDefault();
+      stabKimi();
+    });
+
+    knife.addEventListener('click', () => {
+      stabKimi();
+    });
+
+    function stabKimi() {
+      isKimiKilled = true;
+      kimiTable.style.filter = "grayscale(1) brightness(0.2) drop-shadow(0 0 20px red)";
+      knife.style.display = 'none';
+      
+      stopBossMusic();
+      document.body.classList.remove('screen-virus', 'screen-crashout');
+
+      speakAmerican("No... you killed me...", 0.3, 0.8);
+
+      setTimeout(() => {
+        if (isGamePaused) return;
+        document.getElementById('knifeRoomOverlay').style.display = 'none';
+        
+        const wrapper = document.getElementById('petWrapper');
+        wrapper.className = 'pet-wrapper dead-kimi';
+
+        const badge = document.getElementById('stageBadge');
+        badge.className = 'stage-badge dead';
+        badge.innerText = '💀 KIMI DEFEATED';
+
+        document.getElementById('speechBox').innerText = "Kimi was slain. System normalized.";
+
+        document.getElementById('crisisBtn').style.display = 'block';
+        alert("🔓 UNLOCKED: 'CRISIS DASHBOARD UNLOCKED' button is now available on your dashboard!");
+      }, 1500);
+    }
+
+    /* CRISIS 3: MAC OS ERROR LAND LOGIC */
+    let errorSpawnInterval;
+
+    function openMacOsErrorLand() {
+      closeCrisisDash();
+      const overlay = document.getElementById('macosOverlay');
+      overlay.style.display = 'block';
+      playBoss3Music();
+      speakAmerican("Welcome to Mac OS Error Land.", 0.4, 1.0);
+
+      errorSpawnInterval = setInterval(() => {
+        if (!isGamePaused) spawnRandomErrorWindow();
+      }, 1400);
+
+      spawnRandomErrorWindow();
+      spawnPoeticErrorWindow();
+    }
+
+    function openSadFinder() {
+      const finder = document.getElementById('finderIcon');
+      finder.innerText = '😢';
+      document.getElementById('sadFinderWindow').style.display = 'flex';
+    }
+
+    function runAntivirusExe() {
+      clearInterval(errorSpawnInterval);
+      document.querySelectorAll('.error-window').forEach(w => w.remove());
+      document.getElementById('sadFinderWindow').style.display = 'none';
+      document.getElementById('macosOverlay').style.display = 'none';
+      stopBoss3Music();
+      
+      const kimiImg = document.getElementById('kimiImg');
+      kimiImg.src = 'poop.png';
+      kimiImg.alt = 'Poop Antivirus';
+
+      const badge = document.getElementById('stageBadge');
+      badge.innerText = '💩 SYSTEM ANTIVIRUS APPLIED 💩';
+      badge.style.color = '#d2b48c';
+      badge.style.borderColor = '#d2b48c';
+
+      document.getElementById('speechBox').innerText = "Antivirus installed! Kimi has turned into poop.png!";
+      speakAmerican("Antivirus installed successfully.", 1.2, 1.0);
+    }
+
+    function spawnEmails() {
+      const overlay = document.getElementById('macosOverlay');
+      const emojis = ['📧', '✉️', '📩', '📨'];
+      for (let i = 0; i < 25; i++) {
+        setTimeout(() => {
+          if (isGamePaused) return;
+          const email = document.createElement('div');
+          email.className = 'floating-email';
+          email.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+          email.style.left = `${Math.random() * (window.innerWidth - 50)}px`;
+          email.style.bottom = '80px';
+          overlay.appendChild(email);
+
+          setTimeout(() => email.remove(), 2000);
+        }, i * 50);
+      }
+    }
+
+    function vacuumCleanEmails() {
+      playVacuumSound();
+      
+      const trash = document.getElementById('trashIcon');
+      trash.style.transform = "scale(1.5) rotate(15deg)";
+      setTimeout(() => trash.style.transform = "scale(1) rotate(0deg)", 1500);
+
+      setTimeout(() => {
+        if (isGamePaused) return;
+        document.querySelectorAll('.floating-email').forEach(e => e.remove());
+        playBurpSound();
+      }, 1200);
+    }
+
+    function playVacuumSound() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(60, audioCtx.currentTime);
+        osc.frequency.linearRampToValueAtTime(300, audioCtx.currentTime + 1.2);
+
+        gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 1.3);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start();
+        osc.stop(audioCtx.currentTime + 1.3);
+      } catch (e) {
+        console.log("Audio Context blocked");
+      }
+    }
+
+    function playBurpSound() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        osc.frequency.linearRampToValueAtTime(80, audioCtx.currentTime + 0.4);
+        osc.frequency.linearRampToValueAtTime(120, audioCtx.currentTime + 0.6);
+
+        gain.gain.setValueAtTime(0.7, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.7);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.7);
+      } catch (e) {
+        console.log("Audio Context blocked");
+      }
+    }
+
+    function spawnRandomErrorWindow() {
+      const overlay = document.getElementById('macosOverlay');
+      const win = document.createElement('div');
+      win.className = 'error-window';
+      
+      const randomX = Math.random() * (window.innerWidth - 350);
+      const randomY = Math.random() * (window.innerHeight - 250);
+      win.style.left = `${randomX}px`;
+      win.style.top = `${randomY}px`;
+
+      win.innerHTML = `
+        <div class="error-header">
+          <span>⚠️ Finder Error</span>
+          <button class="error-close-btn" onclick="this.closest('.error-window').remove()">×</button>
+        </div>
+        <div class="error-body">
+          <div class="error-icon-box">❌</div>
+          <div>The application "Finder" unexpectedly quit due to Kimi kernel panic interruption code 0x80070002.</div>
+        </div>
+        <div class="error-footer">
+          <button class="xp-ok-btn" onclick="this.closest('.error-window').remove()">OK</button>
+        </div>
+      `;
+      overlay.appendChild(win);
+    }
+
+    function spawnPoeticErrorWindow() {
+      const overlay = document.getElementById('macosOverlay');
+      const win = document.createElement('div');
+      win.className = 'error-window';
+      
+      const randomX = Math.random() * (window.innerWidth - 350);
+      const randomY = Math.random() * (window.innerHeight - 250);
+      win.style.left = `${randomX}px`;
+      win.style.top = `${randomY}px`;
+
+      win.innerHTML = `
+        <div class="error-header">
+          <span>⚠️ Windows XP Fatal Error</span>
+          <button class="error-close-btn" onclick="this.closest('.error-window').remove()">×</button>
+        </div>
+        <div class="error-body">
+          <div class="error-icon-box">📜</div>
+          <div>roses are red, violets are blue, unknown error on line 32.</div>
+        </div>
+        <div class="error-footer">
+          <button class="xp-ok-btn" onclick="this.closest('.error-window').remove()">OK</button>
+        </div>
+      `;
+      overlay.appendChild(win);
+    }
+
+    /* TERMINAL & HACKING LOGIC */
+    function openTerminal() {
+      closeCrisisDash();
+      terminalOpen = true;
+      document.getElementById('terminalOverlay').style.display = 'flex';
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') return;
+
+      if (e.altKey && (e.key === 'x' || e.key === 'X' || e.code === 'KeyX')) {
+        e.preventDefault();
+        if (terminalOpen && lineCount >= 800) {
+          grantAccessAndCrashout();
+        } else if (terminalOpen) {
+          alert(`NEED MORE CODE! Current lines: ${lineCount} / 800. Keep typing!`);
+        }
+        return;
+      }
+
+      if (terminalOpen && !isGamePaused) {
+        e.preventDefault();
+        let chunk = "";
+        for (let i = 0; i < 6; i++) {
+          let line = hackerCodeSnippet.slice(codeIndex, codeIndex + 45);
+          codeIndex = (codeIndex + 45) % hackerCodeSnippet.length;
+          chunk += `\n[INJECT_${lineCount}] ` + line;
+          lineCount++;
+        }
+
+        const output = document.getElementById('terminalOutput');
+        output.innerText += chunk;
+        output.scrollTop = output.scrollHeight;
+
+        document.getElementById('lineCounter').innerText = `LINES: ${lineCount} / 800`;
+
+        if (lineCount >= 800) {
+          document.getElementById('lineCounter').style.color = '#ffff00';
+          document.getElementById('lineCounter').innerText = `LINES: ${lineCount} [PRESS ALT + X NOW!]`;
+        }
+      }
+    });
+
+    function grantAccessAndCrashout() {
+      terminalOpen = false;
+      isCrashedOut = true;
+      document.getElementById('terminalOverlay').style.display = 'none';
+      document.getElementById('knifeRoomOverlay').style.display = 'none';
+
+      document.body.classList.remove('screen-virus');
+      document.body.classList.add('screen-crashout');
+
+      const wrapper = document.getElementById('petWrapper');
+      wrapper.className = 'pet-wrapper crashed-out';
+
+      const badge = document.getElementById('stageBadge');
+      badge.className = 'stage-badge crashed';
+      badge.innerText = '☠️ ACCESS GRANTED - TOTAL CRASH OUT ☠️';
+
+      const crashText = "ACCESS GRANTED. UBUNTU & KIMI KERNEL DESTROYED. SYSTEM UNSTABLE! 💥💀😈";
+      document.getElementById('speechBox').innerText = crashText;
+
+      speakAmerican("ACCESS GRANTED. I AM EVERYWHERE NOW. YOU CANNOT STOP US.", 0.1, 1.4);
+    }
+  </script>
+</body>
+</html>
